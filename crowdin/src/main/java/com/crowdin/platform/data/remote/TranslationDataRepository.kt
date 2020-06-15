@@ -40,15 +40,24 @@ internal class TranslationDataRepository(
         dataManager.getData<DistributionInfoResponse.DistributionData>(
             DataManager.DISTRIBUTION_DATA,
             DistributionInfoResponse.DistributionData::class.java
-        )?.project?.id?.let { getFiles(it, manifest.files) }
+        )?.project?.id?.let { getFiles(it, manifest.files, languageDataCallback) }
     }
 
-    private fun getFiles(id: String, files: List<String>) {
+    private fun getFiles(
+        id: String,
+        files: List<String>,
+        languageDataCallback: LanguageDataCallback?
+    ) {
         crowdinApi.getFiles(id).execute().body()
-            ?.let { onFilesReceived(files, it, id) }
+            ?.let { onFilesReceived(files, it, id, languageDataCallback) }
     }
 
-    private fun onFilesReceived(files: List<String>, body: FileResponse, projectId: String) {
+    private fun onFilesReceived(
+        files: List<String>,
+        body: FileResponse,
+        projectId: String,
+        languageDataCallback: LanguageDataCallback?
+    ) {
         val languageData = LanguageData(Locale.getDefault().getFormattedCode())
 
         files.forEach { file ->
@@ -67,7 +76,10 @@ internal class TranslationDataRepository(
             }
         }
 
-        ThreadUtils.executeOnMain { dataManager.refreshData(languageData) }
+        ThreadUtils.executeOnMain {
+            dataManager.refreshData(languageData)
+            languageDataCallback?.onDataLoaded(languageData)
+        }
     }
 
     private fun requestBuildTranslation(
