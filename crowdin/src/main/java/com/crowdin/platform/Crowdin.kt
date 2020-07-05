@@ -111,7 +111,7 @@ object Crowdin {
      */
     fun onConfigurationChanged() {
         if (FeatureFlags.isRealTimeUpdateEnabled) {
-            loadTranslation()
+            downloadTranslation()
         }
     }
 
